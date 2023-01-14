@@ -1,0 +1,85 @@
+#! /bin/bash
+set -e
+
+N=X
+source include/variables.sh
+
+if [ "$1" == "" -o "$2" == "" ]; then
+  echo usage: $0 [SRC NUM] [DST NUM]
+  exit 1
+fi
+
+export SRC_CHAIN=chain$1
+export DEST_CHAIN=chain$2
+
+export SRC_HOME=var/run/$SRC_CHAIN
+export DEST_HOME=var/run/$DEST_CHAIN
+
+export SRC_ADDRESS=127.0.1.$1
+export DEST_ADDRESS=127.0.1.$2
+
+export RELAYER_HOME=var/run/relayer
+
+if [[ -e $RELAYER_HOME ]]; then
+  echo relayer: cleaning up $RELAYER_HOME
+  # Clear up the old data
+  rm -rf $RELAYER_HOME
+fi
+
+mkdir -p $RELAYER_HOME
+
+echo relayer: generating config
+
+cat > $RELAYER_HOME/registry.yaml <<YAML
+version: 1
+
+chains:
+  $SRC_CHAIN:
+    chain_id: $SRC_CHAIN
+    prefix: cudos
+    gas_price: 0.025acudos
+    hd_path: m/44'/1234'/0'/2'
+    estimated_block_time: 400
+    estimated_indexer_time: 60
+    rpc:
+      - http://$SRC_ADDRESS:26657
+  $DEST_CHAIN:
+    chain_id: $DEST_CHAIN
+    prefix: cudos
+    gas_price: 0.025acudos
+    hd_path: m/44'/1234'/0'/2'
+    estimated_block_time: 400
+    estimated_indexer_time: 60
+    rpc:
+      - http://$DEST_ADDRESS:26657
+YAML
+
+DATA=$(ibc-setup init -q --src=$SRC_CHAIN --dest=$DEST_CHAIN)
+
+# Sigh
+SRC_ACCOUNT=$(echo "$DATA" | grep -Po '(?<=^Source address: ).*')
+DEST_ACCOUNT=$(echo "$DATA" | grep -Po '(?<=^Destination address: ).*')
+
+export CUDOS_HOME=$SRC_HOME
+
+while [[ $(cudos-noded query bank balances $(address account0) -o json --node http://$SRC_ADDRESS:26657 |
+           jq -j .balances[0].denom) == "null" ]]; do
+  echo "relayer: waiting for account0 to exist"
+  sleep 1
+done
+
+echo relayer: funding $SRC_CHAIN account at $SRC_ACCOUNT
+
+cudos-noded tx bank send --from account0 account0 $SRC_ACCOUNT 1$kCUDOS \
+  --keyring-backend test --node http://$SRC_ADDRESS:26657 --chain-id $SRC_CHAIN -y >/dev/null 2>&1
+
+export CUDOS_HOME=$DEST_HOME
+
+echo relayer: funding $DEST_CHAIN account at $DEST_ACCOUNT
+
+cudos-noded tx bank send --from account0 account0 $DEST_ACCOUNT 1$kCUDOS \
+  --keyring-backend test --node http://$DEST_ADDRESS:26657 --chain-id $DEST_CHAIN -y >/dev/null 2>&1
+
+echo relayer: setting up native ics20 channel
+
+ibc-setup ics20

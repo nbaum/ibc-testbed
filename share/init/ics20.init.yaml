@@ -1,0 +1,8 @@
+name: "PissCoin"
+symbol: "PISS"
+decimals: 18
+initial_balances:
+  - address: "cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s"
+    amount: "100000000000000000000"
+mint:
+  minter: cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s

@@ -1,0 +1,66 @@
+#! /bin/bash
+set -e
+
+cd ${BASH_SOURCE%/*}/..
+
+PATH=$PWD/bin:$PWD/lib:$PATH
+chmod +x bin/* lib/*
+
+supervisorctl shutdown || true
+
+rm -rf var
+
+mkdir -p var/log var/run
+
+supervisord
+
+init-chain 0
+init-chain 1
+
+start-chain 0
+start-chain 1
+
+init-relayer 0 1
+
+start-relayer
+
+# source lib/use-chain.sh
+
+# use-chain 0
+# ibc-transfer transfer channel-0 cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s 1$MCUDOS
+
+# # Send 1MCUDOS to chain 1
+# source scripts/env-1.sh
+# ibc-transfer transfer channel-0 cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s 1$MCUDOS
+
+# # Load contracts into chain 0
+# source scripts/env-0.sh
+# # wasm-store cw1_subkeys        contracts/cw1_subkeys.wasm
+# # wasm-store cw1_whitelist_ng   contracts/cw1_whitelist_ng.wasm
+# # wasm-store cw3_fixed_multisig contracts/cw3_fixed_multisig.wasm
+# # wasm-store cw3_flex_multisig  contracts/cw3_flex_multisig.wasm
+# # wasm-store cw4_group          contracts/cw4_group.wasm
+# # wasm-store cw4_stake          contracts/cw4_stake.wasm
+# wasm-store cw20_base          contracts/cw20_base.wasm
+# wasm-store cw20_ics20         contracts/cw20_ics20.wasm
+# # wasm-store cw1155_base        contracts/cw1155_base.wasm
+
+# # # Load contracts into chain 1
+# # source scripts/env-1.sh
+# # wasm-store cw1_subkeys        contracts/cw1_subkeys.wasm
+# # wasm-store cw1_whitelist_ng   contracts/cw1_whitelist_ng.wasm
+# # wasm-store cw3_fixed_multisig contracts/cw3_fixed_multisig.wasm
+# # wasm-store cw3_flex_multisig  contracts/cw3_flex_multisig.wasm
+# # wasm-store cw4_group          contracts/cw4_group.wasm
+# # wasm-store cw4_stake          contracts/cw4_stake.wasm
+# # wasm-store cw20_base          contracts/cw20_base.wasm
+# # wasm-store cw20_ics20         contracts/cw20_ics20.wasm
+# # wasm-store cw1155_base        contracts/cw1155_base.wasm
+
+# # Instantiate CW20 contract on chain 0
+# source scripts/env-0.sh
+# wasm-instantiate piss cw20_base data/cw20.init.yaml
+
+# # # Instantiate CW20-ICS20 contract on chain 1
+# # source scripts/env-1.sh
+# # wasm-instantiate piss cw20_ics20 data/ics20.init.yaml

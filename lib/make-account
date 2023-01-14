@@ -1,0 +1,11 @@
+#! /bin/bash
+set -e
+
+source include/variables.sh
+
+NAME=$1
+shift
+
+echo "$*" | cudos-noded keys add $NAME --keyring-backend test --recover --output json >/dev/null 2>&1
+
+cudos-noded add-genesis-account $(address $NAME) 1$GCUDOS >/dev/null 2>&1

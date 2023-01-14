@@ -1,0 +1,21 @@
+version: 1
+
+chains:
+  chain-1:
+    chain_id: chain-1
+    prefix: cudos
+    gas_price: 0.025acudos
+    hd_path: m/44'/1234'/0'/2'
+    estimated_block_time: 400
+    estimated_indexer_time: 60
+    rpc:
+      - http://127.0.1.1:26657
+  chain-2:
+    chain_id: chain-2
+    prefix: cudos
+    gas_price: 0.025acudos
+    hd_path: m/44'/1234'/0'/2'
+    estimated_block_time: 400
+    estimated_indexer_time: 60
+    rpc:
+      - http://127.0.1.2:26657

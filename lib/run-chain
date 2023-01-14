@@ -1,0 +1,8 @@
+#! /bin/bash
+set -e
+
+N=${N-$1}
+source include/variables.sh
+
+echo $CHAIN: running node
+cudos-noded start

@@ -1,0 +1,7 @@
+#! /bin/bash
+set -e
+
+N=X
+source include/variables.sh
+
+RELAYER_HOME=var/run/relayer ibc-relayer start --poll 1

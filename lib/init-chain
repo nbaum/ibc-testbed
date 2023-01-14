@@ -1,0 +1,48 @@
+#! /bin/bash
+set -e
+
+N=${N-$1}
+source include/variables.sh
+
+if [[ -e $CUDOS_HOME ]]; then
+  echo $CHAIN: cleaning up $CUDOS_HOME
+  # Clear up the old data
+  rm -rf $CUDOS_HOME
+fi
+
+echo $CHAIN: generating default config
+cudos-noded init $NODENAME --chain-id $CHAIN >/dev/null 2>&1
+
+echo $CHAIN: making default account
+make-account account0 "ordinary witness such toddler tag mouse helmet perfect venue eyebrow upgrade rabbit"
+
+echo $CHAIN: customizing config
+sed -i "/\[api\]/,/\[/ s|^address = .*|address = \"tcp://$ADDRESS:1317\"|" $CUDOS_HOME/config/app.toml
+sed -i "/\[grpc\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9090\"|" $CUDOS_HOME/config/app.toml
+sed -i "/\[grpc-web\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9091\"|" $CUDOS_HOME/config/app.toml
+sed -i "s|^proxy_app = .*|proxy_app = \"$ADDRESS:26658\"|" $CUDOS_HOME/config/config.toml
+sed -i "s|^laddr = .*|laddr = \"tcp://$ADDRESS:26657\"|" $CUDOS_HOME/config/config.toml
+sed -i "s|^pprof_laddr = .*|pprof_laddr = \"$ADDRESS:6060\"|" $CUDOS_HOME/config/config.toml
+sed -i "/\[p2p\]/,/\[/ s|^laddr = .*|laddr = \"tcp://$ADDRESS:26656\"|" $CUDOS_HOME/config/config.toml
+sed -i "s|^prometheus_listen_addr = .*|prometheus_listen_addr = \"$ADDRESS:26660\"|" $CUDOS_HOME/config/config.toml
+sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" $CUDOS_HOME/config/config.toml
+sed -i "s/enabled-unsafe-cors = false/enabled-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
+sed -i "s/enable-unsafe-cors = false/enable-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
+sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0$ACUDOS\"/" $CUDOS_HOME/config/app.toml
+sed -i "/\[api\]/,/\[/ s/enable = false/enable = true/" $CUDOS_HOME/config/app.toml
+sed -i "s/^timeout_commit = .*/timeout_commit = \"1s\"/" $CUDOS_HOME/config/config.toml
+
+jq --arg VALIDATOR_ADDRESS $(address account0) -f share/genesis/genesis.jq $CUDOS_HOME/config/genesis.json | sponge $CUDOS_HOME/config/genesis.json
+
+echo $CHAIN: making validator
+cudos-noded gentx \
+  account0 \
+  2$MCUDOS \
+  0x9fdE6D55dDa637806DbF016a03B6970613630333 \
+  $(address account0) \
+  --min-self-delegation 2000000000000000000000000 \
+  --chain-id $CHAIN \
+  --keyring-backend test >/dev/null 2>&1
+
+echo $CHAIN: finalising genesis
+cudos-noded collect-gentxs >/dev/null 2>&1
