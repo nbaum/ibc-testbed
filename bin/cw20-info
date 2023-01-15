@@ -1,0 +1,12 @@
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd ${BASH_SOURCE%/*}/..
+source include/env.sh
+
+SYMBOL=$1
+
+TOKEN=$(cat $CUDOS_HOME/cw20_tokens/$SYMBOL)
+
+query wasm contract-state smart $TOKEN "{\"token_info\": {}}"

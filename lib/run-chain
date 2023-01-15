@@ -1,8 +1,9 @@
-#! /bin/bash
-set -e
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-N=${N-$1}
-source include/variables.sh
+N=$1
+source include/env.sh
 
 echo $CHAIN: running node
 cudos-noded start

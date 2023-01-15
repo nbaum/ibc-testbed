@@ -1,14 +1,13 @@
-#! /bin/bash
-set -e
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-N=${N-$1}
-source include/variables.sh
+N=$1
+source include/env.sh
 
-if [[ -e $CUDOS_HOME ]]; then
-  echo $CHAIN: cleaning up $CUDOS_HOME
-  # Clear up the old data
-  rm -rf $CUDOS_HOME
-fi
+echo $CHAIN: cleaning up $CUDOS_HOME
+# Clear up the old data
+rm -rf $CUDOS_HOME
 
 echo $CHAIN: generating default config
 cudos-noded init $NODENAME --chain-id $CHAIN >/dev/null 2>&1
@@ -28,7 +27,7 @@ sed -i "s|^prometheus_listen_addr = .*|prometheus_listen_addr = \"$ADDRESS:26660
 sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" $CUDOS_HOME/config/config.toml
 sed -i "s/enabled-unsafe-cors = false/enabled-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
 sed -i "s/enable-unsafe-cors = false/enable-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
-sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0$ACUDOS\"/" $CUDOS_HOME/config/app.toml
+sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0$aCUDOS\"/" $CUDOS_HOME/config/app.toml
 sed -i "/\[api\]/,/\[/ s/enable = false/enable = true/" $CUDOS_HOME/config/app.toml
 sed -i "s/^timeout_commit = .*/timeout_commit = \"1s\"/" $CUDOS_HOME/config/config.toml
 

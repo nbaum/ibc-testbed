@@ -1,0 +1,36 @@
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd ${BASH_SOURCE%/*}/..
+source include/env.sh
+
+BRIDGE=$1
+TOKEN=$2
+AMOUNT=$3
+CHANNEL=$4
+RECIPIENT=$5
+ADDRESS=$(address account0)
+
+BRIDGE=$(cat $CUDOS_HOME/instances/$BRIDGE)
+TOKEN=$(cat $CUDOS_HOME/instances/$TOKEN)
+
+MSG=$(cat <<YAML
+channel: "$CHANNEL"
+remote_address: "$RECIPIENT"
+YAML
+)
+
+MSG=$(cat <<YAML
+send:
+  contract: "$BRIDGE"
+  amount: "$AMOUNT"
+  msg: "$(echo "$MSG" | yq -j | jq -j | base64 -w0)"
+YAML
+)
+
+MSG=$(echo "$MSG" | yq -j | jq -r tostring)
+
+echo $MSG
+
+tx wasm execute $TOKEN "$MSG"

@@ -1,0 +1,31 @@
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd ${BASH_SOURCE%/*}/..
+source include/env.sh
+
+NAME=$1
+# SYMBOL=$1
+# DECIMALS=$3
+# AMOUNT=$4
+ADDRESS=$(address account0)
+
+INIT=$(cat <<YAML
+default_timeout: 1
+gov_contract: $ADDRESS
+allowlist: []
+default_gas_limit: 1000000
+YAML
+)
+
+CODE=$(cat $CUDOS_HOME/codes/cw20_ics20)
+
+tx wasm instantiate "$CODE" "$(echo "$INIT" | yq -j | jq -r tostring)" --label "$NAME" --admin $(address $SENDER) | \
+  jq -r '.logs[].events[].attributes[]|select(.key=="_contract_address").value' | \
+  sponge "$CUDOS_HOME/instances/$NAME"
+
+# mkdir -p "$CUDOS_HOME/cw20_tokens/"
+# cp "$CUDOS_HOME/instances/$SYMBOL" "$CUDOS_HOME/cw20_tokens/$SYMBOL"
+
+echo created: ics20 $(cat $CUDOS_HOME/instances/$NAME) noted in "$CUDOS_HOME/instances/$NAME"

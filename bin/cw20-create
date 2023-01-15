@@ -1,0 +1,37 @@
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd ${BASH_SOURCE%/*}/..
+source include/env.sh
+
+SYMBOL=$1
+NAME=$2
+DECIMALS=$3
+AMOUNT=$4
+ADDRESS=$(address account0)
+
+INIT=$(cat <<YAML
+name: "$NAME"
+symbol: "$SYMBOL"
+decimals: $DECIMALS
+initial_balances:
+  - address: "$ADDRESS"
+    amount: "$AMOUNT"
+mint:
+  minter: "$ADDRESS"
+YAML
+)
+
+CODE=$(cat $CUDOS_HOME/codes/cw20_base)
+
+mkdir -p "$CUDOS_HOME/instances/"
+
+tx wasm instantiate "$CODE" "$(echo "$INIT" | yq -j | jq -r tostring)" --label "$NAME" --admin $(address $SENDER) | \
+  jq -r '.logs[].events[].attributes[]|select(.key=="_contract_address").value' | \
+  sponge "$CUDOS_HOME/instances/$SYMBOL"
+
+mkdir -p "$CUDOS_HOME/cw20_tokens/"
+cp "$CUDOS_HOME/instances/$SYMBOL" "$CUDOS_HOME/cw20_tokens/$SYMBOL"
+
+echo created: token $(cat $CUDOS_HOME/cw20_tokens/$SYMBOL) noted in "$CUDOS_HOME/cw20_tokens/$SYMBOL"

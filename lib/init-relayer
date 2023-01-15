@@ -1,8 +1,8 @@
-#! /bin/bash
-set -e
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-N=X
-source include/variables.sh
+source include/env.sh
 
 if [ "$1" == "" -o "$2" == "" ]; then
   echo usage: $0 [SRC NUM] [DST NUM]
@@ -37,7 +37,7 @@ chains:
   $SRC_CHAIN:
     chain_id: $SRC_CHAIN
     prefix: cudos
-    gas_price: 0.025acudos
+    gas_price: 0acudos
     hd_path: m/44'/1234'/0'/2'
     estimated_block_time: 400
     estimated_indexer_time: 60
@@ -46,7 +46,7 @@ chains:
   $DEST_CHAIN:
     chain_id: $DEST_CHAIN
     prefix: cudos
-    gas_price: 0.025acudos
+    gas_price: 0acudos
     hd_path: m/44'/1234'/0'/2'
     estimated_block_time: 400
     estimated_indexer_time: 60
@@ -68,18 +68,28 @@ while [[ $(cudos-noded query bank balances $(address account0) -o json --node ht
   sleep 1
 done
 
-echo relayer: funding $SRC_CHAIN account at $SRC_ACCOUNT
+echo relayer: funding relayer accounts
 
-cudos-noded tx bank send --from account0 account0 $SRC_ACCOUNT 1$kCUDOS \
-  --keyring-backend test --node http://$SRC_ADDRESS:26657 --chain-id $SRC_CHAIN -y >/dev/null 2>&1
+(
 
-export CUDOS_HOME=$DEST_HOME
+  export CUDOS_HOME=$SRC_HOME
 
-echo relayer: funding $DEST_CHAIN account at $DEST_ACCOUNT
+  cudos-noded tx bank send --from account0 account0 $SRC_ACCOUNT 1$kCUDOS \
+    --keyring-backend test --node http://$SRC_ADDRESS:26657 --chain-id $SRC_CHAIN -y >/dev/null
 
-cudos-noded tx bank send --from account0 account0 $DEST_ACCOUNT 1$kCUDOS \
-  --keyring-backend test --node http://$DEST_ADDRESS:26657 --chain-id $DEST_CHAIN -y >/dev/null 2>&1
+) &
 
-echo relayer: setting up native ics20 channel
+(
 
-ibc-setup ics20
+  export CUDOS_HOME=$DEST_HOME
+
+  cudos-noded tx bank send --from account0 account0 $DEST_ACCOUNT 1$kCUDOS \
+    --keyring-backend test --node http://$DEST_ADDRESS:26657 --chain-id $DEST_CHAIN -y >/dev/null
+
+) &
+
+wait
+
+echo relayer: setting up IBC connection
+
+ibc-setup connect
