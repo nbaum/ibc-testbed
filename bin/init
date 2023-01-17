@@ -41,7 +41,7 @@ ibc-setup channel --src-port wasm.$(cat $NODE_HOME/instances/VIZZINI) --dest-por
 
 use-chain 1
 
-ibc-transfer transfer channel-0 $(address account0) 1
+ibc-transfer transfer channel-0 $(address account0) 1acudos
 
 use-chain 0
 

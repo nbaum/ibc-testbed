@@ -82,7 +82,7 @@ ibc-transfer() {
   local TO=$3
   local AMOUNT=$4
   if ! [[ -z $PORT || -z $CHANNEL || -z $TO || -z $AMOUNT ]]; then
-    tx ibc-transfer transfer "$PORT" "$CHANNEL" "$TO" "$AMOUNT"acudos >/dev/null
+    tx ibc-transfer transfer "$PORT" "$CHANNEL" "$TO" "$AMOUNT" >/dev/null
   else
     echo usage: ibc-transfer PORT CHANNEL TO AMOUNT > /dev/stderr
     false
