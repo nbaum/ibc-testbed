@@ -1,11 +1,14 @@
 N=${N-N}
 
 ROOT=$(readlink -f $PWD/${BASH_SOURCE%/*}/..)
+
+source $ROOT/etc/env
+
+export NODED
+
 export N
 export CHAIN=chain$N
-export ADDRESS_PREFIX=169.254.1
 export ADDRESS_PREFIX=127.0.1
-export ADDRESS_PREFIX=192.168.2
 export ADDRESS=$ADDRESS_PREFIX.$N
 export NODENAME=node$N
 export NODE_HOME=$ROOT/var/run/$CHAIN
@@ -29,8 +32,6 @@ export YCUDOS=000$ZCUDOS
 export RCUDOS=000$YCUDOS
 export QCUDOS=000$RCUDOS
 export SENDER=account0
-export NODED=cudos-noded
-# export NODED=wasmd
 
 if [[ $NODED == cudos-noded ]]; then
   export PREFIX=cudos
