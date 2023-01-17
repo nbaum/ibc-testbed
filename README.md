@@ -11,6 +11,10 @@ You'll need to install supervisor.
 
 * http://supervisord.org/
 
+You'll need to install ts-relayer.
+
+* https://github.com/confio/ts-relayer
+
 To use other node binaries, you'll need to do some editing.
 
 Edit etc/env to select which node binary you'll be using.
