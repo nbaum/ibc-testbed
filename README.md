@@ -19,6 +19,10 @@ To use other node binaries, you'll need to do some editing.
 
 Edit etc/env to select which node binary you'll be using.
 
+## Using
+
+It probably won't work properly unless you're in the root directory of the repo.
+
 ## Starting from scratch
 
 Run `bin/init`.
