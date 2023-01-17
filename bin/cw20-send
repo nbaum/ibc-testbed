@@ -6,7 +6,7 @@ cd ${BASH_SOURCE%/*}/..
 source include/env.sh
 
 SYMBOL=$1
-TOKEN=$(cat $CUDOS_HOME/cw20_tokens/$SYMBOL)
+TOKEN=$(cat $NODE_HOME/cw20_tokens/$SYMBOL)
 
 TO=$2
 AMOUNT=$3

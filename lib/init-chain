@@ -5,43 +5,55 @@ IFS=$'\n\t'
 N=$1
 source include/env.sh
 
-echo $CHAIN: cleaning up $CUDOS_HOME
+echo $CHAIN: cleaning up $NODE_HOME
 # Clear up the old data
-rm -rf $CUDOS_HOME
+rm -rf $NODE_HOME
 
 echo $CHAIN: generating default config
-cudos-noded init $NODENAME --chain-id $CHAIN >/dev/null 2>&1
+$NODED init $NODENAME --home $NODE_HOME --chain-id $CHAIN
 
 echo $CHAIN: making default account
-make-account account0 "ordinary witness such toddler tag mouse helmet perfect venue eyebrow upgrade rabbit"
+make-account account0 $(cat $ROOT/etc/mnemonic)
 
 echo $CHAIN: customizing config
-sed -i "/\[api\]/,/\[/ s|^address = .*|address = \"tcp://$ADDRESS:1317\"|" $CUDOS_HOME/config/app.toml
-sed -i "/\[grpc\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9090\"|" $CUDOS_HOME/config/app.toml
-sed -i "/\[grpc-web\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9091\"|" $CUDOS_HOME/config/app.toml
-sed -i "s|^proxy_app = .*|proxy_app = \"$ADDRESS:26658\"|" $CUDOS_HOME/config/config.toml
-sed -i "s|^laddr = .*|laddr = \"tcp://$ADDRESS:26657\"|" $CUDOS_HOME/config/config.toml
-sed -i "s|^pprof_laddr = .*|pprof_laddr = \"$ADDRESS:6060\"|" $CUDOS_HOME/config/config.toml
-sed -i "/\[p2p\]/,/\[/ s|^laddr = .*|laddr = \"tcp://$ADDRESS:26656\"|" $CUDOS_HOME/config/config.toml
-sed -i "s|^prometheus_listen_addr = .*|prometheus_listen_addr = \"$ADDRESS:26660\"|" $CUDOS_HOME/config/config.toml
-sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" $CUDOS_HOME/config/config.toml
-sed -i "s/enabled-unsafe-cors = false/enabled-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
-sed -i "s/enable-unsafe-cors = false/enable-unsafe-cors = true/" $CUDOS_HOME/config/app.toml
-sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0$aCUDOS\"/" $CUDOS_HOME/config/app.toml
-sed -i "/\[api\]/,/\[/ s/enable = false/enable = true/" $CUDOS_HOME/config/app.toml
-sed -i "s/^timeout_commit = .*/timeout_commit = \"1s\"/" $CUDOS_HOME/config/config.toml
+sed -i "/\[api\]/,/\[/ s|^address = .*|address = \"tcp://$ADDRESS:1317\"|" $NODE_HOME/config/app.toml
+sed -i "/\[grpc\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9090\"|" $NODE_HOME/config/app.toml
+sed -i "/\[grpc-web\]/,/\[/ s|^address = .*|address = \"$ADDRESS:9091\"|" $NODE_HOME/config/app.toml
+sed -i "s|^proxy_app = .*|proxy_app = \"$ADDRESS:26658\"|" $NODE_HOME/config/config.toml
+sed -i "s|^laddr = .*|laddr = \"tcp://$ADDRESS:26657\"|" $NODE_HOME/config/config.toml
+sed -i "s|^pprof_laddr = .*|pprof_laddr = \"$ADDRESS:6060\"|" $NODE_HOME/config/config.toml
+sed -i "/\[p2p\]/,/\[/ s|^laddr = .*|laddr = \"tcp://$ADDRESS:26656\"|" $NODE_HOME/config/config.toml
+sed -i "s|^prometheus_listen_addr = .*|prometheus_listen_addr = \"$ADDRESS:26660\"|" $NODE_HOME/config/config.toml
+sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" $NODE_HOME/config/config.toml
+sed -i "s/enabled-unsafe-cors = false/enabled-unsafe-cors = true/" $NODE_HOME/config/app.toml
+sed -i "s/enable-unsafe-cors = false/enable-unsafe-cors = true/" $NODE_HOME/config/app.toml
+sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0$aCUDOS\"/" $NODE_HOME/config/app.toml
+sed -i "/\[api\]/,/\[/ s/enable = false/enable = true/" $NODE_HOME/config/app.toml
+sed -i "s/^timeout_commit = .*/timeout_commit = \"1s\"/" $NODE_HOME/config/config.toml
 
-jq --arg VALIDATOR_ADDRESS $(address account0) -f share/genesis/genesis.jq $CUDOS_HOME/config/genesis.json | sponge $CUDOS_HOME/config/genesis.json
+jq --arg VALIDATOR_ADDRESS $(address account0) -f share/genesis/genesis.jq $NODE_HOME/config/genesis.json | sponge $NODE_HOME/config/genesis.json
 
-echo $CHAIN: making validator
-cudos-noded gentx \
-  account0 \
-  2$MCUDOS \
-  0x9fdE6D55dDa637806DbF016a03B6970613630333 \
-  $(address account0) \
-  --min-self-delegation 2000000000000000000000000 \
-  --chain-id $CHAIN \
-  --keyring-backend test >/dev/null 2>&1
+if [[ $NODED == cudos-noded ]]; then
+  echo $CHAIN: making validator
+  $NODED gentx \
+    account0 \
+    2$MCUDOS \
+    0x9fdE6D55dDa637806DbF016a03B6970613630333 \
+    $(address account0) \
+    --min-self-delegation 2000000000000000000000000 \
+    --chain-id $CHAIN \
+    --home $NODE_HOME \
+    --keyring-backend test >/dev/null
+else
+  echo $CHAIN: making validator
+  $NODED gentx \
+    account0 \
+    2$kCUDOS \
+    --min-self-delegation 2000000000000000000000 \
+    --chain-id $CHAIN \
+    --home $NODE_HOME \
+    --keyring-backend test >/dev/null
+fi
 
 echo $CHAIN: finalising genesis
-cudos-noded collect-gentxs >/dev/null 2>&1
+$NODED collect-gentxs --home $NODE_HOME >/dev/null

@@ -15,8 +15,8 @@ export DEST_CHAIN=chain$2
 export SRC_HOME=var/run/$SRC_CHAIN
 export DEST_HOME=var/run/$DEST_CHAIN
 
-export SRC_ADDRESS=127.0.1.$1
-export DEST_ADDRESS=127.0.1.$2
+export SRC_ADDRESS=$ADDRESS_PREFIX.$1
+export DEST_ADDRESS=$ADDRESS_PREFIX.$2
 
 export RELAYER_HOME=var/run/relayer
 
@@ -36,18 +36,18 @@ version: 1
 chains:
   $SRC_CHAIN:
     chain_id: $SRC_CHAIN
-    prefix: cudos
+    prefix: $PREFIX
     gas_price: 0acudos
-    hd_path: m/44'/1234'/0'/2'
+    hd_path: m/44'/118'/0'/0'
     estimated_block_time: 400
     estimated_indexer_time: 60
     rpc:
       - http://$SRC_ADDRESS:26657
   $DEST_CHAIN:
     chain_id: $DEST_CHAIN
-    prefix: cudos
+    prefix: $PREFIX
     gas_price: 0acudos
-    hd_path: m/44'/1234'/0'/2'
+    hd_path: m/44'/118'/0'/0'
     estimated_block_time: 400
     estimated_indexer_time: 60
     rpc:
@@ -62,7 +62,10 @@ DEST_ACCOUNT=$(echo "$DATA" | grep -Po '(?<=^Destination address: ).*')
 
 export CUDOS_HOME=$SRC_HOME
 
-while [[ $(cudos-noded query bank balances $(address account0) -o json --node http://$SRC_ADDRESS:26657 |
+echo relayer: chain0 relayer account: $SRC_ACCOUNT
+echo relayer: chain1 relayer account: $DEST_ACCOUNT
+
+while [[ $($NODED query bank balances $(address account0) -o json --node http://$SRC_ADDRESS:26657 |
            jq -j .balances[0].denom) == "null" ]]; do
   echo "relayer: waiting for account0 to exist"
   sleep 1
@@ -70,25 +73,11 @@ done
 
 echo relayer: funding relayer accounts
 
-(
+$NODED tx bank send --from account0 account0 $SRC_ACCOUNT 1$kCUDOS --home $SRC_HOME \
+--keyring-backend test --node http://$SRC_ADDRESS:26657 --chain-id $SRC_CHAIN -y >/dev/null
 
-  export CUDOS_HOME=$SRC_HOME
-
-  cudos-noded tx bank send --from account0 account0 $SRC_ACCOUNT 1$kCUDOS \
-    --keyring-backend test --node http://$SRC_ADDRESS:26657 --chain-id $SRC_CHAIN -y >/dev/null
-
-) &
-
-(
-
-  export CUDOS_HOME=$DEST_HOME
-
-  cudos-noded tx bank send --from account0 account0 $DEST_ACCOUNT 1$kCUDOS \
-    --keyring-backend test --node http://$DEST_ADDRESS:26657 --chain-id $DEST_CHAIN -y >/dev/null
-
-) &
-
-wait
+$NODED tx bank send --from account0 account0 $DEST_ACCOUNT 1$kCUDOS --home $DEST_HOME \
+  --keyring-backend test --node http://$DEST_ADDRESS:26657 --chain-id $DEST_CHAIN -y >/dev/null
 
 echo relayer: setting up IBC connection
 

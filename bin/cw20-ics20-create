@@ -12,20 +12,20 @@ NAME=$1
 ADDRESS=$(address account0)
 
 INIT=$(cat <<YAML
-default_timeout: 1
+default_timeout: 60
 gov_contract: $ADDRESS
 allowlist: []
 default_gas_limit: 1000000
 YAML
 )
 
-CODE=$(cat $CUDOS_HOME/codes/cw20_ics20)
+CODE=$(cat $NODE_HOME/codes/cw20_ics20)
 
 tx wasm instantiate "$CODE" "$(echo "$INIT" | yq -j | jq -r tostring)" --label "$NAME" --admin $(address $SENDER) | \
   jq -r '.logs[].events[].attributes[]|select(.key=="_contract_address").value' | \
-  sponge "$CUDOS_HOME/instances/$NAME"
+  sponge "$NODE_HOME/instances/$NAME"
 
-# mkdir -p "$CUDOS_HOME/cw20_tokens/"
-# cp "$CUDOS_HOME/instances/$SYMBOL" "$CUDOS_HOME/cw20_tokens/$SYMBOL"
+# mkdir -p "$NODE_HOME/cw20_tokens/"
+# cp "$NODE_HOME/instances/$SYMBOL" "$NODE_HOME/cw20_tokens/$SYMBOL"
 
-echo created: ics20 $(cat $CUDOS_HOME/instances/$NAME) noted in "$CUDOS_HOME/instances/$NAME"
+echo created: ics20 $(cat $NODE_HOME/instances/$NAME) noted in "$NODE_HOME/instances/$NAME"

@@ -6,7 +6,9 @@ cd ${BASH_SOURCE%/*}/..
 
 PATH=$PWD/bin:$PWD/lib:$PATH
 chmod +x bin/* lib/*
+source include/env.sh
 
+killall hermes || true
 supervisorctl shutdown || true
 
 rm -rf var
@@ -15,42 +17,33 @@ mkdir -p var/log var/run
 
 supervisord
 
-(
-  init-chain 0
-  start-chain 0
-) &
+init-chain 0
+start-chain 0
 
-(
-  init-chain 1
-  start-chain 1
-) &
+init-chain 1
+start-chain 1
 
-wait
+use-chain 0
+
+wasm-store cw20_base  share/wasm/cw20_base.wasm
+wasm-store cw20_ics20 share/wasm/cw20_ics20.wasm
+
+cw20-create FEZZIK "Fezzik Coin" 18 1000
+
+cw20-ics20-create VIZZINI
 
 init-relayer 0 1
 
 start-relayer
 
-source include/env.sh
+ibc-setup channel --src-port transfer --dest-port transfer
 
-ibc-setup ics20
+ibc-setup channel --src-port wasm.$(cat $NODE_HOME/instances/VIZZINI) --dest-port transfer
 
-(
-  use-chain 0
-  ibc-transfer transfer channel-0 cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s 1$MCUDOS
-) &
+use-chain 1
 
-(
-  use-chain 1
-  ibc-transfer transfer channel-0 cudos1yvtuaadhfhxf8ke7zm902z4rj382a8ayymq32s 1$MCUDOS
-)
+ibc-transfer transfer channel-0 $(address account0) 1
 
 use-chain 0
-wasm-store cw20_base  share/wasm/cw20_base.wasm
-wasm-store cw20_ics20 share/wasm/cw20_ics20.wasm
 
-cw20-create PISS "Piss Coin" 18 1000
-
-ics20-create VIZZINI
-
-ibc-setup ics20 --src-port wasm.$(cat $CUDOS_HOME/instances/VIZZINI)
+cw20-ics20-send VIZZINI FEZZIK 1 channel-1 $(address account0)

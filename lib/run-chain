@@ -6,4 +6,4 @@ N=$1
 source include/env.sh
 
 echo $CHAIN: running node
-cudos-noded start
+$NODED start --home $NODE_HOME

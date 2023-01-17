@@ -23,15 +23,15 @@ mint:
 YAML
 )
 
-CODE=$(cat $CUDOS_HOME/codes/cw20_base)
+CODE=$(cat $NODE_HOME/codes/cw20_base)
 
-mkdir -p "$CUDOS_HOME/instances/"
+mkdir -p "$NODE_HOME/instances/"
 
 tx wasm instantiate "$CODE" "$(echo "$INIT" | yq -j | jq -r tostring)" --label "$NAME" --admin $(address $SENDER) | \
   jq -r '.logs[].events[].attributes[]|select(.key=="_contract_address").value' | \
-  sponge "$CUDOS_HOME/instances/$SYMBOL"
+  sponge "$NODE_HOME/instances/$SYMBOL"
 
-mkdir -p "$CUDOS_HOME/cw20_tokens/"
-cp "$CUDOS_HOME/instances/$SYMBOL" "$CUDOS_HOME/cw20_tokens/$SYMBOL"
+mkdir -p "$NODE_HOME/cw20_tokens/"
+cp "$NODE_HOME/instances/$SYMBOL" "$NODE_HOME/cw20_tokens/$SYMBOL"
 
-echo created: token $(cat $CUDOS_HOME/cw20_tokens/$SYMBOL) noted in "$CUDOS_HOME/cw20_tokens/$SYMBOL"
+echo created: token $(cat $NODE_HOME/cw20_tokens/$SYMBOL) noted in "$NODE_HOME/cw20_tokens/$SYMBOL"
