@@ -8,7 +8,6 @@ PATH=$PWD/bin:$PWD/lib:$PATH
 chmod +x bin/* lib/*
 source include/env.sh
 
-killall hermes || true
 supervisorctl shutdown || true
 
 rm -rf var
@@ -47,3 +46,5 @@ ibc-transfer transfer channel-0 $(address account0) 1
 use-chain 0
 
 cw20-ics20-send VIZZINI FEZZIK 1 channel-1 $(address account0)
+
+supervisorctl shutdown

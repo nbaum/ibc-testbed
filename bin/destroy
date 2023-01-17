@@ -1,0 +1,15 @@
+#! /bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd ${BASH_SOURCE%/*}/..
+
+PATH=$PWD/bin:$PWD/lib:$PATH
+chmod +x bin/* lib/*
+source include/env.sh
+
+supervisorctl shutdown || true
+
+rm -rf var
+
+mkdir -p var/log var/run
