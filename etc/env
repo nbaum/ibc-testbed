@@ -1,2 +1,2 @@
-# NODED=wasmd
-NODED=cudos-noded
+NODED=wasmd
+# NODED=cudos-noded
